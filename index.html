@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta DNI Perú - Buscador RENIEC</title>
+    <!-- Tailwind CSS para estilos modernos y responsivos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuente Inter de Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Animación suave para el modal y alertas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.22s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-red-100 selection:text-red-900">
+
+    <!-- Barra Superior / Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <!-- Identidad Visual Perú -->
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-sm shadow-red-200 shrink-0">
+                    <!-- Icono Documento Identidad SVG -->
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Consulta DNI Perú</h1>
+                    <p class="text-xs text-slate-500 hidden sm:block">Verificación de identidad mediante API</p>
+                </div>
+            </div>
+
+            <!-- Botón de Configuración -->
+            <button
+                id="btnOpenConfig"
+                type="button"
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500/40 relative"
+                title="Configurar URL y Token de API"
+            >
+                <!-- Indicador de estado de configuración -->
+                <span id="configStatusDot" class="w-2 h-2 rounded-full bg-amber-500" title="API pendiente de configurar"></span>
+                <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Configurar API</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="flex-grow max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+        <!-- Aviso si aún no se ha configurado la API -->
+        <div id="unconfiguredBanner" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div class="text-sm text-amber-900">
+                    <p class="font-semibold">Aún no has configurado tu API</p>
+                    <p class="text-amber-700 mt-0.5">Ingresa la URL de tu proveedor y tu Token para comenzar a realizar consultas.</p>
+                </div>
+            </div>
+            <button id="btnBannerConfig" type="button" class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-xl transition-colors shrink-0">
+                Configurar ahora
+            </button>
+        </div>
+
+        <!-- Tarjeta de Búsqueda de DNI -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/90 p-5 sm:p-7">
+            <form id="dniForm" novalidate class="space-y-4">
+                <div>
+                    <label for="dniInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        Número de DNI
+                    </label>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="relative flex-grow">
+                            <input
+                                type="text"
+                                id="dniInput"
+                                name="dni"
+                                inputmode="numeric"
+                                maxlength="8"
+                                autocomplete="off"
+                                placeholder="Ej. 45871234"
+                                class="w-full pl-4 pr-16 py-3.5 text-lg font-semibold tracking-widest text-slate-900 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-600 transition-all placeholder:font-normal placeholder:tracking-normal placeholder:text-slate-400"
+                            />
+                            <!-- Contador de dígitos (0/8) -->
+                            <span id="digitCounter" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-600">
+                                0/8
+                            </span>
+                        </div>
+
+                        <button
+                            id="btnConsultar"
+                            type="submit"
+                            class="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-white bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm shadow-red-200 transition-all sm:w-auto w-full"
+                        >
+                            <!-- Icono Lupa -->
+                            <svg id="searchIcon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <!-- Spinner oculto por defecto -->
+                            <svg id="loadingSpinner" class="hidden animate-spin w-5 h-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span id="btnConsultarText">Consultar</span>
+                        </button>
+                    </div>
+                    <p id="inputErrorMsg" class="hidden text-xs font-medium text-red-600 mt-2 flex items-center gap-1.5">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Ingresa un número de DNI válido de exactamente 8 dígitos numéricos.</span>
+                    </p>
+                </div>
+            </form>
+        </section>
+
+        <!-- Contenedor de Alertas / Errores de API -->
+        <div id="apiAlertBox" class="hidden rounded-2xl p-4 border animate-fade-in">
+            <div class="flex items-start gap-3">
+                <div id="apiAlertIcon" class="mt-0.5 shrink-0"></div>
+                <div class="flex-grow text-sm">
+                    <h3 id="apiAlertTitle" class="font-semibold"></h3>
+                    <p id="apiAlertMessage" class="mt-1 opacity-90 leading-relaxed"></p>
+                </div>
+                <button id="btnCloseAlert" type="button" class="text-current opacity-60 hover:opacity-100 p-1 rounded-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Resultados -->
+        <section id="resultSection" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden animate-fade-in">
+            <!-- Cabecera del Resultado -->
+            <div class="bg-slate-50 border-b border-slate-200 px-5 sm:px-7 py-4 flex flex-wrap items-center justify-between gap-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900">Datos Encontrados</h2>
+                        <p id="resultTimestamp" class="text-xs text-slate-500">Consulta exitosa</p>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción (Copiar y Limpiar) -->
+                <div class="flex items-center gap-2">
+                    <button
+                        id="btnCopyResult"
+                        type="button"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors"
+                    >
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        <span id="copyBtnLabel">Copiar datos</span>
+                    </button>
+                    <button
+                        id="btnClearResult"
+                        type="button"
+                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 transition-colors"
+                        title="Limpiar consulta"
+                    >
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tarjeta Destacada: Nombre Completo y DNI -->
+            <div class="p-5 sm:p-7 space-y-6">
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-400 block mb-1">
+                            Titular del Documento
+                        </span>
+                        <p id="highlightFullName" class="text-lg sm:text-xl font-bold tracking-tight text-white">
+                            ---
+                        </p>
+                    </div>
+                    <div class="sm:text-right shrink-0 bg-white/10 px-4 py-2.5 rounded-xl border border-white/10">
+                        <span class="text-[11px] uppercase tracking-wider font-semibold text-slate-300 block">
+                            N° DNI
+                        </span>
+                        <p id="highlightDni" class="text-lg font-mono font-bold text-amber-300 tracking-wider">
+                            --------
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Grilla Dinámica de Todos los Campos Devueltos por la API -->
+                <div>
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                        Detalle del Registro
+                    </h3>
+                    <div id="fieldsGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <!-- Las tarjetas de campos se inyectan dinámicamente vía JS -->
+                    </div>
+                </div>
+
+                <!-- Acordeón opcional para ver el JSON crudo -->
+                <details class="group border border-slate-200 rounded-xl bg-slate-50/60">
+                    <summary class="cursor-pointer px-4 py-2.5 text-xs font-medium text-slate-600 hover:text-slate-900 flex items-center justify-between select-none">
+                        <span>Ver respuesta JSON original de la API</span>
+                        <svg class="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </summary>
+                    <pre id="rawJsonOutput" class="px-4 pb-3 pt-1 text-xs font-mono text-slate-700 overflow-x-auto leading-relaxed"></pre>
+                </details>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer discreto -->
+    <footer class="py-5 text-center text-xs text-slate-400 border-t border-slate-200/70 bg-white/50">
+        <p>Las credenciales de tu API se almacenan únicamente de forma local en tu navegador (<code class="text-slate-500">localStorage</code>).</p>
+    </footer>
+
+    <!-- ===================================================================== -->
+    <!-- MODAL DE CONFIGURACIÓN DE API                                         -->
+    <!-- ===================================================================== -->
+    <div id="configModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <!-- Fondo oscuro con desenfoque -->
+        <div id="modalBackdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
+
+        <!-- Contenedor centrado -->
+        <div class="fixed inset-0 overflow-y-auto p-4 flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-lg overflow-hidden animate-fade-in relative z-10">
+                <!-- Cabecera Modal -->
+                <div class="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-xl bg-slate-200/80 text-slate-700 flex items-center justify-center">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                        </div>
+                        <h2 id="modalTitle" class="text-base font-bold text-slate-900">Configuración de API RENIEC</h2>
+                    </div>
+                    <button id="btnCloseModal" type="button" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-200/60 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Formulario de Configuración -->
+                <form id="configForm" class="p-6 space-y-5">
+                    <!-- Campo URL del Endpoint -->
+                    <div>
+                        <label for="apiUrlInput" class="block text-sm font-semibold text-slate-700 mb-1">
+                            URL Base del Endpoint
+                        </label>
+                        <input
+                            type="url"
+                            id="apiUrlInput"
+                            required
+                            placeholder="https://api.apis.net.pe/v2/reniec/dni?numero="
+                            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-600 transition-all"
+                        />
+                        <div class="mt-2 bg-slate-50 border border-slate-200/80 rounded-xl p-3 text-xs text-slate-600 space-y-1">
+                            <p class="font-medium text-slate-700">¿Cómo se inserta el DNI en la URL?</p>
+                            <ul class="list-disc list-inside space-y-0.5 text-slate-500">
+                                <li>Si escribes <code class="text-slate-700 bg-slate-200/70 px-1 rounded">{dni}</code> en la URL, se reemplazará ahí (ej. <code class="text-slate-700">.../dni/{dni}</code>).</li>
+                                <li>Si no usas marcador, el DNI se añadirá al final (ej. <code class="text-slate-700">...?numero=</code> + DNI).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Campo Token / API Key -->
+                    <div>
+                        <label for="apiTokenInput" class="block text-sm font-semibold text-slate-700 mb-1">
+                            Token / API Key
+                        </label>
+                        <div class="relative">
+                            <input
+                                type="password"
+                                id="apiTokenInput"
+                                placeholder="Pega aquí tu token secreto..."
+                                autocomplete="off"
+                                class="w-full pl-3.5 pr-11 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-600 transition-all"
+                            />
+                            <button
+                                type="button"
+                                id="btnToggleToken"
+                                class="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg"
+                                title="Mostrar u ocultar token"
+                            >
+                                <!-- Ojo abierto -->
+                                <svg id="eyeOpenIcon" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <!-- Ojo tachado -->
+                                <svg id="eyeClosedIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Método de envío del Token -->
+                    <div>
+                        <label for="authModeSelect" class="block text-sm font-semibold text-slate-700 mb-1">
+                            Método de autenticación
+                        </label>
+                        <select
+                            id="authModeSelect"
+                            class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-600 transition-all"
+                        >
+                            <option value="bearer">Cabecera HTTP: Authorization: Bearer &lt;TOKEN&gt; (Estándar)</option>
+                            <option value="query">Parámetro en URL: ?token=&lt;TOKEN&gt; (Ej. apisperu.com)</option>
+                            <option value="none">Sin token (API pública o token incluido en la URL)</option>
+                        </select>
+                    </div>
+
+                    <!-- Botones del Modal -->
+                    <div class="pt-2 flex flex-col-reverse sm:flex-row items-center justify-between gap-3 border-t border-slate-100">
+                        <button
+                            type="button"
+                            id="btnResetConfig"
+                            class="w-full sm:w-auto px-3.5 py-2 text-xs font-medium text-slate-500 hover:text-red-600 rounded-xl hover:bg-red-50 transition-colors"
+                        >
+                            Restaurar valores por defecto
+                        </button>
+                        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                            <button
+                                type="button"
+                                id="btnCancelModal"
+                                class="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                class="px-5 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl shadow-sm transition-colors"
+                            >
+                                Guardar configuración
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- LÓGICA JAVASCRIPT DE LA APLICACIÓN                                    -->
+    <!-- ===================================================================== -->
+    <script>
+        (function () {
+            'use strict';
+
+            // Clave de almacenamiento en localStorage
+            const STORAGE_KEY = 'consulta_dni_peru_api_config_v1';
+
+            // Configuración predeterminada explicativa
+            const DEFAULT_CONFIG = {
+                apiUrl: 'https://api.apis.net.pe/v2/reniec/dni?numero=',
+                apiToken: '',
+                authMode: 'bearer' // 'bearer' | 'query' | 'none'
+            };
+
+            // Estado en memoria
+            let currentConfig = loadConfig();
+            let lastFormattedText = '';
+
+            // Referencias al DOM
+            const dom = {
+                // Header y Banners
+                btnOpenConfig: document.getElementById('btnOpenConfig'),
+                configStatusDot: document.getElementById('configStatusDot'),
+                unconfiguredBanner: document.getElementById('unconfiguredBanner'),
+                btnBannerConfig: document.getElementById('btnBannerConfig'),
+
+                // Formulario DNI
+                dniForm: document.getElementById('dniForm'),
+                dniInput: document.getElementById('dniInput'),
+                digitCounter: document.getElementById('digitCounter'),
+                btnConsultar: document.getElementById('btnConsultar'),
+                btnConsultarText: document.getElementById('btnConsultarText'),
+                searchIcon: document.getElementById('searchIcon'),
+                loadingSpinner: document.getElementById('loadingSpinner'),
+                inputErrorMsg: document.getElementById('inputErrorMsg'),
+
+                // Alertas API
+                apiAlertBox: document.getElementById('apiAlertBox'),
+                apiAlertIcon: document.getElementById('apiAlertIcon'),
+                apiAlertTitle: document.getElementById('apiAlertTitle'),
+                apiAlertMessage: document.getElementById('apiAlertMessage'),
+                btnCloseAlert: document.getElementById('btnCloseAlert'),
+
+                // Resultados
+                resultSection: document.getElementById('resultSection'),
+                resultTimestamp: document.getElementById('resultTimestamp'),
+                highlightFullName: document.getElementById('highlightFullName'),
+                highlightDni: document.getElementById('highlightDni'),
+                fieldsGrid: document.getElementById('fieldsGrid'),
+                rawJsonOutput: document.getElementById('rawJsonOutput'),
+                btnCopyResult: document.getElementById('btnCopyResult'),
+                copyBtnLabel: document.getElementById('copyBtnLabel'),
+                btnClearResult: document.getElementById('btnClearResult'),
+
+                // Modal Configuración
+                configModal: document.getElementById('configModal'),
+                modalBackdrop: document.getElementById('modalBackdrop'),
+                btnCloseModal: document.getElementById('btnCloseModal'),
+                btnCancelModal: document.getElementById('btnCancelModal'),
+                configForm: document.getElementById('configForm'),
+                apiUrlInput: document.getElementById('apiUrlInput'),
+                apiTokenInput: document.getElementById('apiTokenInput'),
+                authModeSelect: document.getElementById('authModeSelect'),
+                btnToggleToken: document.getElementById('btnToggleToken'),
+                eyeOpenIcon: document.getElementById('eyeOpenIcon'),
+                eyeClosedIcon: document.getElementById('eyeClosedIcon'),
+                btnResetConfig: document.getElementById('btnResetConfig')
+            };
+
+            // Diccionario para traducir y embellecer claves comunes de APIs peruanas
+            const FIELD_LABELS = {
+                nombres: 'Nombres',
+                name: 'Nombres',
+                first_name: 'Nombres',
+                apellidoPaterno: 'Apellido Paterno',
+                apellido_paterno: 'Apellido Paterno',
+                father_last_name: 'Apellido Paterno',
+                apellidoMaterno: 'Apellido Materno',
+                apellido_materno: 'Apellido Materno',
+                mother_last_name: 'Apellido Materno',
+                nombreCompleto: 'Nombre Completo',
+                nombre_completo: 'Nombre Completo',
+                full_name: 'Nombre Completo',
+                numeroDocumento: 'Número de Documento',
+                numero_documento: 'Número de Documento',
+                dni: 'DNI',
+                document_number: 'Número de Documento',
+                tipoDocumento: 'Tipo de Documento',
+                tipo_documento: 'Tipo de Documento',
+                digitoVerificador: 'Dígito Verificador',
+                digito_verificador: 'Dígito Verificador',
+                codVerifica: 'Código Verificador',
+                codigo_verificacion: 'Código Verificador',
+                fechaNacimiento: 'Fecha de Nacimiento',
+                fecha_nacimiento: 'Fecha de Nacimiento',
+                sexo: 'Sexo / Género',
+                genero: 'Género',
+                estadoCivil: 'Estado Civil',
+                estado_civil: 'Estado Civil',
+                ubigeo: 'Ubigeo',
+                departamento: 'Departamento',
+                provincia: 'Provincia',
+                distrito: 'Distrito',
+                direccion: 'Dirección',
+                direccionCompleta: 'Dirección Completa'
+            };
+
+            // =================================================================
+            // INICIALIZACIÓN Y GESTIÓN DE CONFIGURACIÓN (localStorage)
+            // =================================================================
+
+            function loadConfig() {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+                    }
+                } catch (e) {
+                    console.warn('No se pudo leer localStorage:', e);
+                }
+                return { ...DEFAULT_CONFIG };
+            }
+
+            function saveConfig(newConfig) {
+                currentConfig = { ...newConfig };
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(currentConfig));
+                } catch (e) {
+                    console.error('Error al guardar en localStorage:', e);
+                }
+                updateConfigUIState();
+            }
+
+            function isConfigReady() {
+                const hasUrl = Boolean(currentConfig.apiUrl && currentConfig.apiUrl.trim());
+                if (!hasUrl) return false;
+                if (currentConfig.authMode !== 'none' && !currentConfig.apiToken.trim()) {
+                    return false;
+                }
+                return true;
+            }
+
+            function updateConfigUIState() {
+                const ready = isConfigReady();
+                if (ready) {
+                    dom.configStatusDot.classList.remove('bg-amber-500');
+                    dom.configStatusDot.classList.add('bg-emerald-500');
+                    dom.configStatusDot.title = 'API configurada correctamente';
+                    dom.unconfiguredBanner.classList.add('hidden');
+                } else {
+                    dom.configStatusDot.classList.remove('bg-emerald-500');
+                    dom.configStatusDot.classList.add('bg-amber-500');
+                    dom.configStatusDot.title = 'API pendiente de configurar';
+                    dom.unconfiguredBanner.classList.remove('hidden');
+                }
+            }
+
+            // =================================================================
+            // CONTROL DEL MODAL DE CONFIGURACIÓN
+            // =================================================================
+
+            function openConfigModal() {
+                dom.apiUrlInput.value = currentConfig.apiUrl || '';
+                dom.apiTokenInput.value = currentConfig.apiToken || '';
+                dom.authModeSelect.value = currentConfig.authMode || 'bearer';
+
+                // Asegurar que el token inicie oculto al abrir
+                dom.apiTokenInput.type = 'password';
+                dom.eyeOpenIcon.classList.remove('hidden');
+                dom.eyeClosedIcon.classList.add('hidden');
+
+                dom.configModal.classList.remove('hidden');
+                setTimeout(() => dom.apiUrlInput.focus(), 50);
+            }
+
+            function closeConfigModal() {
+                dom.configModal.classList.add('hidden');
+            }
+
+            dom.btnOpenConfig.addEventListener('click', openConfigModal);
+            dom.btnBannerConfig.addEventListener('click', openConfigModal);
+            dom.btnCloseModal.addEventListener('click', closeConfigModal);
+            dom.btnCancelModal.addEventListener('click', closeConfigModal);
+            dom.modalBackdrop.addEventListener('click', closeConfigModal);
+
+            // Cerrar modal con tecla Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !dom.configModal.classList.contains('hidden')) {
+                    closeConfigModal();
+                }
+            });
+
+            // Mostrar / Ocultar contraseña del Token
+            dom.btnToggleToken.addEventListener('click', () => {
+                const isPassword = dom.apiTokenInput.type === 'password';
+                dom.apiTokenInput.type = isPassword ? 'text' : 'password';
+                dom.eyeOpenIcon.classList.toggle('hidden', isPassword);
+                dom.eyeClosedIcon.classList.toggle('hidden', !isPassword);
+            });
+
+            // Restaurar configuración por defecto
+            dom.btnResetConfig.addEventListener('click', () => {
+                dom.apiUrlInput.value = DEFAULT_CONFIG.apiUrl;
+                dom.apiTokenInput.value = '';
+                dom.authModeSelect.value = DEFAULT_CONFIG.authMode;
+            });
+
+            // Guardar formulario de configuración
+            dom.configForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const urlVal = dom.apiUrlInput.value.trim();
+                const tokenVal = dom.apiTokenInput.value.trim();
+                const authModeVal = dom.authModeSelect.value;
+
+                if (!urlVal) {
+                    dom.apiUrlInput.focus();
+                    return;
+                }
+
+                saveConfig({
+                    apiUrl: urlVal,
+                    apiToken: tokenVal,
+                    authMode: authModeVal
+                });
+
+                closeConfigModal();
+                hideAlert();
+                dom.dniInput.focus();
+            });
+
+            // =================================================================
+            // VALIDACIÓN DEL CAMPO DNI (SOLO 8 DÍGITOS NUMÉRICOS)
+            // =================================================================
+
+            dom.dniInput.addEventListener('input', () => {
+                // Eliminar cualquier carácter que no sea dígito (0-9)
+                const cleanValue = dom.dniInput.value.replace(/\D/g, '').slice(0, 8);
+                dom.dniInput.value = cleanValue;
+
+                // Actualizar contador visual
+                dom.digitCounter.textContent = `${cleanValue.length}/8`;
+                if (cleanValue.length === 8) {
+                    dom.digitCounter.classList.remove('bg-slate-200/80', 'text-slate-600');
+                    dom.digitCounter.classList.add('bg-emerald-100', 'text-emerald-700');
+                    dom.inputErrorMsg.classList.add('hidden');
+                    dom.dniInput.classList.remove('border-red-500');
+                } else {
+                    dom.digitCounter.classList.add('bg-slate-200/80', 'text-slate-600');
+                    dom.digitCounter.classList.remove('bg-emerald-100', 'text-emerald-700');
+                }
+            });
+
+            // =================================================================
+            // MANEJO DE ALERTAS Y ESTADOS DE CARGA
+            // =================================================================
+
+            function setLoading(isLoading) {
+                dom.btnConsultar.disabled = isLoading;
+                dom.dniInput.disabled = isLoading;
+                if (isLoading) {
+                    dom.searchIcon.classList.add('hidden');
+                    dom.loadingSpinner.classList.remove('hidden');
+                    dom.btnConsultarText.textContent = 'Consultando...';
+                } else {
+                    dom.searchIcon.classList.remove('hidden');
+                    dom.loadingSpinner.classList.add('hidden');
+                    dom.btnConsultarText.textContent = 'Consultar';
+                }
+            }
+
+            function showAlert(type, title, message) {
+                dom.apiAlertBox.classList.remove(
+                    'hidden',
+                    'bg-red-50', 'border-red-200', 'text-red-900',
+                    'bg-amber-50', 'border-amber-200', 'text-amber-900'
+                );
+
+                if (type === 'warning') {
+                    dom.apiAlertBox.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
+                    dom.apiAlertIcon.innerHTML = `<svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+                } else {
+                    dom.apiAlertBox.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
+                    dom.apiAlertIcon.innerHTML = `<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`;
+                }
+
+                dom.apiAlertTitle.textContent = title;
+                dom.apiAlertMessage.textContent = message;
+            }
+
+            function hideAlert() {
+                dom.apiAlertBox.classList.add('hidden');
+            }
+
+            dom.btnCloseAlert.addEventListener('click', hideAlert);
+
+            // =================================================================
+            // EJECUCIÓN DE CONSULTA A LA API
+            // =================================================================
+
+            dom.dniForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                hideAlert();
+
+                const dni = dom.dniInput.value.trim();
+
+                // 1. Validar longitud exacta de 8 dígitos
+                if (!/^\d{8}$/.test(dni)) {
+                    dom.inputErrorMsg.classList.remove('hidden');
+                    dom.dniInput.classList.add('border-red-500');
+                    dom.dniInput.focus();
+                    return;
+                }
+
+                // 2. Verificar que la API esté configurada
+                if (!isConfigReady()) {
+                    showAlert(
+                        'warning',
+                        'Configuración incompleta',
+                        'Por favor configura primero la URL de la API y tu Token usando el botón "Configurar API" en la esquina superior derecha.'
+                    );
+                    openConfigModal();
+                    return;
+                }
+
+                // 3. Construir la URL final de consulta
+                let finalUrl = currentConfig.apiUrl.trim();
+                if (finalUrl.includes('{dni}')) {
+                    finalUrl = finalUrl.replace(/\{dni\}/g, encodeURIComponent(dni));
+                } else {
+                    finalUrl = finalUrl + encodeURIComponent(dni);
+                }
+
+                // Si el usuario eligió enviar token por query string (?token=...)
+                const headers = {
+                    'Accept': 'application/json'
+                };
+
+                if (currentConfig.authMode === 'bearer' && currentConfig.apiToken) {
+                    headers['Authorization'] = `Bearer ${currentConfig.apiToken}`;
+                } else if (currentConfig.authMode === 'query' && currentConfig.apiToken) {
+                    const separator = finalUrl.includes('?') ? '&' : '?';
+                    finalUrl += `${separator}token=${encodeURIComponent(currentConfig.apiToken)}`;
+                }
+
+                // 4. Realizar petición Fetch
+                setLoading(true);
+                dom.resultSection.classList.add('hidden');
+
+                try {
+                    const response = await fetch(finalUrl, {
+                        method: 'GET',
+                        headers: headers
+                    });
+
+                    // Intentar parsear respuesta JSON incluso si hay error HTTP
+                    let responseData = null;
+                    const contentType = response.headers.get('content-type') || '';
+                    if (contentType.includes('application/json')) {
+                        responseData = await response.json();
+                    } else {
+                        const textResp = await response.text();
+                        try {
+                            responseData = JSON.parse(textResp);
+                        } catch (_) {
+                            responseData = { raw: textResp };
+                        }
+                    }
+
+                    // Manejo de códigos de estado HTTP
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                            throw new Error('Token inválido o sin permisos (HTTP ' + response.status + '). Verifica tu API Key en la configuración.');
+                        } else if (response.status === 404 || response.status === 422) {
+                            const apiMsg = responseData?.message || responseData?.error || 'No se encontraron registros para el DNI ingresado.';
+                            throw new Error(apiMsg);
+                        } else if (response.status === 429) {
+                            throw new Error('Has excedido el límite de consultas permitidas por tu plan de API (HTTP 429).');
+                        } else {
+                            const apiMsg = responseData?.message || responseData?.error || `Error del servidor (HTTP ${response.status}).`;
+                            throw new Error(apiMsg);
+                        }
+                    }
+
+                    // Algunas APIs devuelven HTTP 200 con { success: false, message: "..." }
+                    if (responseData && typeof responseData === 'object') {
+                        if (responseData.success === false || responseData.estado === false) {
+                            throw new Error(responseData.message || responseData.mensaje || 'La API indicó que no se encontraron datos para este DNI.');
+                        }
+                    }
+
+                    // Extraer objeto de datos principal si viene envuelto en { data: {...} } o { result: {...} }
+                    const payload = extractMainPayload(responseData);
+
+                    if (!payload || Object.keys(payload).length === 0) {
+                        throw new Error('La API devolvió una respuesta vacía para este número de DNI.');
+                    }
+
+                    renderResult(dni, payload, responseData);
+
+                } catch (err) {
+                    // Detectar errores típicos de red o bloqueo CORS en navegador
+                    if (err instanceof TypeError && err.message.toLowerCase().includes('fetch')) {
+                        showAlert(
+                            'error',
+                            'Error de conexión o bloqueo CORS',
+                            'No se pudo conectar con el servidor de la API. Verifica tu conexión a internet, que la URL sea correcta o si tu proveedor de API permite peticiones directas desde el navegador (CORS).'
+                        );
+                    } else {
+                        showAlert('error', 'No se pudo completar la consulta', err.message || 'Ocurrió un error inesperado.');
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            // =================================================================
+            // PROCESAMIENTO Y RENDERIZADO DE RESULTADOS
+            // =================================================================
+
+            /**
+             * Desempaqueta objetos anidados típicos de APIs peruanas (ej. { success: true, data: { ... } })
+             */
+            function extractMainPayload(raw) {
+                if (!raw || typeof raw !== 'object') return null;
+
+                // Si tiene propiedad 'data' que es un objeto no nulo y no array
+                if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
+                    return raw.data;
+                }
+                // Si tiene propiedad 'result' o 'resultado'
+                if (raw.result && typeof raw.result === 'object' && !Array.isArray(raw.result)) {
+                    return raw.result;
+                }
+                if (raw.resultado && typeof raw.resultado === 'object' && !Array.isArray(raw.resultado)) {
+                    return raw.resultado;
+                }
+
+                // Filtrar metadatos técnicos si vienen en la raíz junto con los datos
+                const metaKeys = new Set(['success', 'status', 'code', 'message', 'mensaje', 'origen']);
+                const filtered = {};
+                for (const [k, v] of Object.entries(raw)) {
+                    if (!metaKeys.has(k)) {
+                        filtered[k] = v;
+                    }
+                }
+                return Object.keys(filtered).length > 0 ? filtered : raw;
+            }
+
+            /**
+             * Convierte claves camelCase o snake_case en etiquetas legibles en español
+             */
+            function formatFieldLabel(key) {
+                if (FIELD_LABELS[key]) return FIELD_LABELS[key];
+                return key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/_/g, ' ')
+                    .replace(/\b\w/g, (char) => char.toUpperCase())
+                    .trim();
+            }
+
+            function renderResult(queriedDni, data, fullRawResponse) {
+                // 1. Determinar nombre completo para la tarjeta destacada
+                const nombres = data.nombres || data.name || data.first_name || '';
+                const apPaterno = data.apellidoPaterno || data.apellido_paterno || data.father_last_name || '';
+                const apMaterno = data.apellidoMaterno || data.apellido_materno || data.mother_last_name || '';
+                const nombreCompletoApi = data.nombreCompleto || data.nombre_completo || data.full_name || '';
+
+                const computedFullName = nombreCompletoApi.trim()
+                    || [nombres, apPaterno, apMaterno].filter(Boolean).join(' ').trim()
+                    || 'Titular Registrado';
+
+                // 2. Determinar número de DNI + dígito verificador si existe
+                const docNum = data.numeroDocumento || data.numero_documento || data.dni || data.document_number || queriedDni;
+                const digitoVerif = data.digitoVerificador ?? data.digito_verificador ?? data.codVerifica ?? data.codigo_verificacion ?? '';
+
+                dom.highlightFullName.textContent = computedFullName;
+                dom.highlightDni.textContent = digitoVerif !== '' ? `${docNum} - ${digitoVerif}` : docNum;
+
+                // 3. Hora de consulta
+                const now = new Date();
+                dom.resultTimestamp.textContent = `Consultado a las ${now.toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+
+                // 4. Renderizar dinámicamente todos los campos en la grilla
+                dom.fieldsGrid.innerHTML = '';
+                const textLinesForCopy = [`DNI: ${dom.highlightDni.textContent}`, `Nombre Completo: ${computedFullName}`];
+
+                // Aplanar un nivel si hay sub-objetos (ej. ubigeo o dirección estructurada)
+                const flatEntries = flattenObject(data);
+
+                flatEntries.forEach(([key, value]) => {
+                    const displayValue = (value === null || value === undefined || value === '')
+                        ? 'No especificado'
+                        : String(value);
+
+                    const label = formatFieldLabel(key);
+                    textLinesForCopy.push(`${label}: ${displayValue}`);
+
+                    const card = document.createElement('div');
+                    card.className = 'bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col justify-between';
+
+                    const labelEl = document.createElement('span');
+                    labelEl.className = 'text-[11px] font-semibold uppercase tracking-wider text-slate-400';
+                    labelEl.textContent = label;
+
+                    const valueEl = document.createElement('span');
+                    valueEl.className = `text-sm font-semibold mt-1 break-words ${displayValue === 'No especificado' ? 'text-slate-400 italic font-normal' : 'text-slate-800'}`;
+                    valueEl.textContent = displayValue;
+
+                    card.appendChild(labelEl);
+                    card.appendChild(valueEl);
+                    dom.fieldsGrid.appendChild(card);
+                });
+
+                // Guardar texto formateado para el botón de copiar
+                lastFormattedText = textLinesForCopy.join('\n');
+
+                // 5. Mostrar JSON crudo en el acordeón
+                dom.rawJsonOutput.textContent = JSON.stringify(fullRawResponse, null, 2);
+
+                // Mostrar sección de resultados
+                dom.resultSection.classList.remove('hidden');
+            }
+
+            /**
+             * Aplana objetos anidados simples para mostrar cada dato en su propia tarjeta
+             */
+            function flattenObject(obj, prefix = '') {
+                let rows = [];
+                for (const [k, v] of Object.entries(obj)) {
+                    const newKey = prefix ? `${prefix} ${k}` : k;
+                    if (v && typeof v === 'object' && !Array.isArray(v)) {
+                        rows = rows.concat(flattenObject(v, newKey));
+                    } else if (Array.isArray(v)) {
+                        rows.push([newKey, v.join(', ')]);
+                    } else {
+                        rows.push([newKey, v]);
+                    }
+                }
+                return rows;
+            }
+
+            // =================================================================
+            // COPIAR DATOS Y LIMPIAR RESULTADOS
+            // =================================================================
+
+            dom.btnCopyResult.addEventListener('click', () => {
+                if (!lastFormattedText) return;
+
+                // Uso de textarea temporal + execCommand('copy') para compatibilidad total en iframes
+                const tempTextarea = document.createElement('textarea');
+                tempTextarea.value = lastFormattedText;
+                tempTextarea.style.position = 'fixed';
+                tempTextarea.style.left = '-9999px';
+                document.body.appendChild(tempTextarea);
+                tempTextarea.select();
+
+                try {
+                    document.execCommand('copy');
+                    const originalText = dom.copyBtnLabel.textContent;
+                    dom.copyBtnLabel.textContent = '¡Copiado!';
+                    dom.btnCopyResult.classList.add('border-emerald-400', 'text-emerald-700', 'bg-emerald-50');
+
+                    setTimeout(() => {
+                        dom.copyBtnLabel.textContent = originalText;
+                        dom.btnCopyResult.classList.remove('border-emerald-400', 'text-emerald-700', 'bg-emerald-50');
+                    }, 2000);
+                } catch (err) {
+                    console.error('No se pudo copiar al portapapeles:', err);
+                } finally {
+                    document.body.removeChild(tempTextarea);
+                }
+            });
+
+            dom.btnClearResult.addEventListener('click', () => {
+                dom.resultSection.classList.add('hidden');
+                dom.dniInput.value = '';
+                dom.digitCounter.textContent = '0/8';
+                dom.digitCounter.classList.add('bg-slate-200/80', 'text-slate-600');
+                dom.digitCounter.classList.remove('bg-emerald-100', 'text-emerald-700');
+                hideAlert();
+                dom.dniInput.focus();
+            });
+
+            // Ejecutar estado inicial al cargar la página
+            updateConfigUIState();
+        })();
+    </script>
+</body>
+</html>
